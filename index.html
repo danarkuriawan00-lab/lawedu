@@ -1,586 +1,396 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Home, 
-  BookOpen, 
-  Zap, 
-  Trophy, 
-  Shield, 
-  Lock, 
-  MessageSquare, 
-  AlertCircle, 
-  Heart, 
-  Search, 
-  ShieldCheck, 
-  FileText, 
-  ExternalLink, 
-  ChevronRight, 
-  ArrowLeft, 
-  Bell, 
-  Scale, 
-  CheckCircle,
-  XCircle,
-  Info
-} from 'lucide-react';
-
-const LOGO_URL = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgBENwUGD91BGHhUBoMcXoE5lf0ZrT2rdSJVWEjkldYTAzOzC7MChAwupawsX8Slc4Kk33LjTTYd4WLZQcYQ28WAxYOllfZp1pYo-q_lX9YlDM9XQrfUGd6zQd65NfDSabb0PMprbxpyou5FVu65d0ocx_w5csdq3quXziggZ7wQGBVycQ2g5Tme_g82PIl/w200-h200/Desain%20tanpa%20judul%20(6).png";
-
-const App = () => {
-  const [activeTab, setActiveTab] = useState('beranda');
-  const [selectedMateri, setSelectedMateri] = useState(null);
-  const [kuisStep, setKuisStep] = useState(0); 
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [score, setScore] = useState(0);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [simStep, setSimStep] = useState(0);
-  const [simFeedback, setSimFeedback] = useState(null);
-  const [progress, setProgress] = useState(60);
-
-  // Data Definitions
-  const materiData = [
-    { 
-      id: 1,
-      title: 'Privasi & Data Pribadi', 
-      sub: 'Amankan jejak digitalmu.', 
-      icon: <Lock className="text-blue-500" />, 
-      bg: 'bg-blue-50',
-      content: `
-        Data pribadi adalah aset berharga di era digital. Memahami batasan apa yang boleh dibagikan adalah kunci keamanan.
-        
-        • Apa itu Data Pribadi? Nama lengkap, alamat, nomor HP, lokasi real-time, dan data biometrik.
-        • Bahaya Oversharing: Identitas bisa dicuri (Identity Theft) atau disalahgunakan untuk pinjaman online ilegal.
-        • Tips Aman: Aktifkan 2FA (Two-Factor Authentication), jangan klik link mencurigakan (Phishing), dan rutin ganti kata sandi.
-      `
-    },
-    { 
-      id: 2,
-      title: 'Cyberbullying', 
-      sub: 'Batasan bercanda di medsos.', 
-      icon: <MessageSquare className="text-rose-500" />, 
-      bg: 'bg-rose-50',
-      content: `
-        Perundungan di dunia maya sering dianggap sepele, padahal dampaknya bisa sangat fatal bagi kesehatan mental korban.
-        
-        • Definisi: Perilaku berulang yang ditujukan untuk menakuti, membuat marah, atau mempermalukan mereka yang menjadi sasaran.
-        • Bentuk: Menyebarkan kebohongan, mengirim pesan kasar, atau mengucilkan seseorang di grup.
-        • Hukum: Di Indonesia, tindakan ini bisa dijerat dengan UU ITE jika mengandung unsur penghinaan atau pencemaran nama baik.
-      `
-    },
-    { 
-      id: 3,
-      title: 'Jerat UU ITE', 
-      sub: 'Pasal penting hukum siber.', 
-      icon: <AlertCircle className="text-indigo-500" />, 
-      bg: 'bg-indigo-50',
-      content: `
-        Undang-Undang Informasi dan Transaksi Elektronik (UU ITE) mengatur lalu lintas digital di Indonesia.
-        
-        • Pasal 27: Melarang penyebaran konten asusila, perjudian, penghinaan, dan pemerasan.
-        • Pasal 28: Melarang penyebaran berita bohong (hoaks) dan ujaran kebencian berbasis SARA.
-        • Etika: Berpikir sebelum memposting adalah perlindungan hukum terbaik bagi diri sendiri.
-      `
-    },
-    { 
-      id: 4,
-      title: 'Hak Cipta Konten', 
-      sub: 'Hargai karya orang lain.', 
-      icon: <Heart className="text-emerald-500" />, 
-      bg: 'bg-emerald-50',
-      content: `
-        Hanya karena sebuah konten ada di internet, bukan berarti konten tersebut gratis untuk diambil tanpa izin.
-        
-        • Hak Moral: Hak untuk dicantumkan namanya sebagai pencipta.
-        • Hak Ekonomi: Hak untuk mendapatkan manfaat ekonomi dari karya tersebut.
-        • Fair Use: Penggunaan konten untuk kritik, ulasan, atau pendidikan dengan tetap mencantumkan sumber secara jelas.
-      `
-    },
-  ];
-
-  const kuisQuestions = [
-    {
-      question: "Apa prinsip utama dalam etika digital 'THINK'?",
-      options: [
-        { text: 'Total, Honest, Icon, New, Kind', correct: false },
-        { text: 'True, Helpful, Inspiring, Necessary, Kind', correct: true },
-        { text: 'Tough, High, Intelligent, Nice, Knowledge', correct: false }
-      ]
-    },
-    {
-      question: "Manakah yang merupakan ciri Phishing?",
-      options: [
-        { text: 'Email resmi dari bank menggunakan nama lengkap kita', correct: false },
-        { text: 'Link yang meminta username dan password dengan alasan akun terblokir', correct: true },
-        { text: 'Pesan dari teman yang mengajak bermain game populer', correct: false }
-      ]
-    },
-    {
-      question: "Berapa lama jejak digital bisa bertahan di internet?",
-      options: [
-        { text: 'Hanya 24 jam seperti Story Instagram', correct: false },
-        { text: 'Bisa bertahan selamanya karena adanya cache dan screenshot', correct: true },
-        { text: 'Hilang otomatis jika kita menghapus akun', correct: false }
-      ]
-    }
-  ];
-
-  // Logic Handlers
-  const resetKuis = () => {
-    setKuisStep(0);
-    setCurrentQuestionIndex(0);
-    setSelectedOption(null);
-    setScore(0);
-    setShowFeedback(false);
-  };
-
-  const handleKuisNext = () => {
-    if (selectedOption === null) return;
-    const currentQ = kuisQuestions[currentQuestionIndex];
-    if (currentQ.options[selectedOption].correct) {
-      setScore(s => s + 1);
-    }
-    setShowFeedback(true);
-
-    setTimeout(() => {
-      setShowFeedback(false);
-      setSelectedOption(null);
-      if (currentQuestionIndex < kuisQuestions.length - 1) {
-        setCurrentQuestionIndex(prev => prev + 1);
-      } else {
-        setKuisStep(2);
-        setProgress(prev => Math.min(100, prev + 10));
-      }
-    }, 1000);
-  };
-
-  const handleSimChoice = (isCorrect) => {
-    setSimFeedback(isCorrect ? 'correct' : 'wrong');
-    setTimeout(() => {
-      if (isCorrect) {
-        setSimStep(prev => prev + 1);
-        setProgress(prev => Math.min(100, prev + 5));
-      }
-      setSimFeedback(null);
-    }, 1500);
-  };
-
-  // Views
-  const HomeView = () => (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 p-8 text-white shadow-2xl">
-        <div className="relative z-10">
-          <div className="bg-white/20 backdrop-blur-md w-fit px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] mb-4 border border-white/20">
-            Smart Citizenship
-          </div>
-          <h2 className="text-3xl font-black leading-tight mb-3">
-            Bijak Berinternet,<br/>Selamat Dari Jerat!
-          </h2>
-          <p className="text-blue-50/80 text-sm font-medium max-w-[85%] leading-relaxed">
-            Pahami hukum digital agar perjalanan onlinemu tetap aman dan beretika.
-          </p>
-          <button 
-            onClick={() => setActiveTab('materi')} 
-            className="mt-8 bg-white text-indigo-700 px-6 py-3 rounded-2xl font-bold text-sm shadow-xl flex items-center gap-2 hover:bg-blue-50 active:scale-95 transition-all group"
-          >
-            Mulai Belajar 
-            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
-        <Scale size={180} className="absolute -bottom-10 -right-10 opacity-10 rotate-12 text-white" />
-      </div>
-
-      <section>
-        <div className="flex justify-between items-center mb-5 px-1">
-          <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-widest flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-            Menu Utama
-          </h3>
-        </div>
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            { id: 'materi', label: 'Materi', icon: <BookOpen />, color: 'bg-blue-500', shadow: 'shadow-blue-200' },
-            { id: 'simulasi', label: 'Kasus', icon: <Zap />, color: 'bg-emerald-500', shadow: 'shadow-emerald-200' },
-            { id: 'toolkit', label: 'Tools', icon: <Shield />, color: 'bg-violet-500', shadow: 'shadow-violet-200' },
-            { id: 'kuis', label: 'Kuis', icon: <Trophy />, color: 'bg-amber-500', shadow: 'shadow-amber-200' },
-          ].map((item) => (
-            <button 
-              key={item.id} 
-              onClick={() => setActiveTab(item.id)} 
-              className="flex flex-col items-center gap-2 group"
-            >
-              <div className={`${item.color} ${item.shadow} w-full aspect-square rounded-[1.5rem] text-white shadow-lg flex items-center justify-center group-hover:-translate-y-1 group-active:scale-90 transition-all duration-300`}>
-                {React.cloneElement(item.icon, { size: 24 })}
-              </div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100/50">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-50 p-2 rounded-xl">
-              <ShieldCheck size={20} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Progress Belajar</p>
-              <p className="text-xs font-black text-slate-800">Mastering Cyber Law</p>
-            </div>
-          </div>
-          <span className="text-sm font-black text-blue-600">{progress}%</span>
-        </div>
-        <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5">
-          <div 
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const MateriDetailView = () => (
-    <div className="animate-in slide-in-from-right duration-300">
-      <div className={`p-8 rounded-[2.5rem] ${selectedMateri.bg} mb-6 flex justify-center`}>
-        {React.cloneElement(selectedMateri.icon, { size: 64 })}
-      </div>
-      <h2 className="text-2xl font-black text-slate-900 mb-4">{selectedMateri.title}</h2>
-      <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm mb-6">
-        <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed whitespace-pre-line">
-          {selectedMateri.content}
-        </div>
-      </div>
-      <button 
-        onClick={() => setSelectedMateri(null)}
-        className="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl flex items-center justify-center gap-2"
-      >
-        <ArrowLeft size={18} /> Kembali ke Daftar
-      </button>
-    </div>
-  );
-
-  const MateriListView = () => (
-    <div className="space-y-4 animate-in slide-in-from-bottom-4">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="font-black text-xl text-slate-900">Materi Belajar</h2>
-        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">4 Modul</span>
-      </div>
-      {materiData.map((m) => (
-        <div 
-          key={m.id} 
-          onClick={() => setSelectedMateri(m)}
-          className="bg-white p-5 rounded-[2rem] flex items-center gap-4 border border-slate-100 shadow-sm hover:shadow-md active:scale-98 transition-all cursor-pointer group"
-        >
-          <div className={`${m.bg} p-4 rounded-2xl group-hover:scale-110 transition-transform`}>
-            {React.cloneElement(m.icon, { size: 24 })}
-          </div>
-          <div className="flex-1">
-            <p className="font-black text-slate-900 text-sm uppercase tracking-tight">{m.title}</p>
-            <p className="text-[11px] text-slate-400 font-medium">{m.sub}</p>
-          </div>
-          <div className="bg-slate-50 p-2 rounded-full text-slate-300">
-            <ChevronRight size={16} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  const ToolkitView = () => (
-    <div className="space-y-4 animate-in slide-in-from-bottom-4">
-      <h2 className="font-black text-xl text-slate-900">Digital Toolkit</h2>
-      {[
-        { t: 'Cek Hoaks', d: 'Verifikasi kebenaran informasi.', i: <Search />, bg: 'bg-sky-50', c: 'text-sky-500' },
-        { t: 'Analisis Password', d: 'Uji kekuatan keamanan akun.', i: <ShieldCheck />, bg: 'bg-emerald-50', c: 'text-emerald-500' },
-        { t: 'Lapor Cyber', d: 'Panduan pelaporan ke pihak berwajib.', i: <FileText />, bg: 'bg-indigo-50', c: 'text-indigo-500' },
-        { t: 'Panduan Etika', d: 'Kumpulan SOP berkomunikasi digital.', i: <Info />, bg: 'bg-rose-50', c: 'text-rose-500' },
-      ].map((item, idx) => (
-        <div key={idx} className="bg-white p-6 rounded-[2rem] border border-slate-100 flex items-center gap-5 shadow-sm hover:shadow-md transition-all">
-          <div className={`${item.bg} p-4 rounded-2xl`}>
-            {React.cloneElement(item.i, { size: 28, className: item.c })}
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-black text-slate-800 uppercase tracking-tight">{item.t}</p>
-            <p className="text-[11px] text-slate-400 leading-tight">{item.d}</p>
-          </div>
-          <ExternalLink size={18} className="text-slate-200" />
-        </div>
-      ))}
-    </div>
-  );
-
-  const KuisView = () => (
-    <div className="h-full flex flex-col">
-      {kuisStep === 0 && (
-        <div className="flex flex-col items-center justify-center text-center space-y-8 py-10 animate-in zoom-in duration-500">
-          <div className="relative">
-            <div className="w-40 h-40 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 border-8 border-white shadow-2xl">
-              <Trophy size={80} />
-            </div>
-            <div className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">New</div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 uppercase">Kuis Hukum Digital</h2>
-            <p className="text-slate-400 text-sm mt-2 max-w-[250px] mx-auto font-medium">Uji pemahamanmu tentang etika dan hukum di internet.</p>
-          </div>
-          <button 
-            onClick={() => setKuisStep(1)} 
-            className="w-full bg-indigo-600 text-white py-5 rounded-[1.5rem] font-bold shadow-xl shadow-indigo-100 active:scale-95 transition-all"
-          >
-            Mulai Sekarang
-          </button>
-        </div>
-      )}
-
-      {kuisStep === 1 && (
-        <div className="space-y-6 animate-in slide-in-from-right duration-300">
-          <div className="flex justify-between items-end">
-            <div>
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Pertanyaan</p>
-              <h4 className="text-lg font-black text-slate-900">{currentQuestionIndex + 1} / {kuisQuestions.length}</h4>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Skor Saat Ini</p>
-              <h4 className="text-lg font-black text-indigo-600">{score * 10}</h4>
-            </div>
-          </div>
-
-          <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-            <div 
-              className="bg-blue-600 h-full transition-all duration-300"
-              style={{ width: `${((currentQuestionIndex + 1) / kuisQuestions.length) * 100}%` }}
-            ></div>
-          </div>
-
-          <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100/50">
-            <h3 className="font-bold text-slate-800 text-md leading-relaxed">{kuisQuestions[currentQuestionIndex].question}</h3>
-          </div>
-
-          <div className="space-y-3">
-            {kuisQuestions[currentQuestionIndex].options.map((opt, i) => (
-              <button 
-                key={i} 
-                disabled={showFeedback}
-                onClick={() => setSelectedOption(i)}
-                className={`w-full p-5 rounded-2xl border-2 text-left text-xs font-extrabold transition-all flex items-center gap-4
-                  ${selectedOption === i ? 'border-indigo-600 bg-indigo-50/50 text-indigo-700 shadow-sm' : 'bg-white border-slate-100 text-slate-500'}
-                  ${showFeedback && opt.correct ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : ''}
-                  ${showFeedback && selectedOption === i && !opt.correct ? 'border-rose-500 bg-rose-50 text-rose-700' : ''}
-                `}
-              >
-                <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-[10px] ${selectedOption === i ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                  {String.fromCharCode(65 + i)}
-                </span>
-                {opt.text}
-                {showFeedback && opt.correct && <CheckCircle size={16} className="ml-auto text-emerald-500" />}
-                {showFeedback && selectedOption === i && !opt.correct && <XCircle size={16} className="ml-auto text-rose-500" />}
-              </button>
-            ))}
-          </div>
-
-          <button 
-            disabled={selectedOption === null || showFeedback}
-            onClick={handleKuisNext}
-            className="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold shadow-lg disabled:opacity-50 disabled:bg-slate-400 mt-4 active:scale-95 transition-all"
-          >
-            {currentQuestionIndex === kuisQuestions.length - 1 ? 'Lihat Hasil' : 'Selanjutnya'}
-          </button>
-        </div>
-      )}
-
-      {kuisStep === 2 && (
-        <div className="flex flex-col items-center text-center py-10 animate-in zoom-in duration-500">
-          <div className="w-48 h-48 bg-indigo-600 rounded-full flex flex-col items-center justify-center text-white border-[12px] border-indigo-50 shadow-2xl mb-8">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Skor Akhir</span>
-            <span className="text-6xl font-black">{Math.round((score/kuisQuestions.length)*100)}</span>
-          </div>
-          <h2 className="text-2xl font-black text-slate-900 uppercase mb-3">Misi Selesai!</h2>
-          <p className="text-slate-400 text-sm mb-10 max-w-[280px] font-medium">
-            {score === kuisQuestions.length ? "Luar biasa! Kamu adalah Warga Digital Teladan." : "Bagus! Terus tingkatkan pemahamanmu tentang hukum siber."}
-          </p>
-          <div className="grid grid-cols-2 gap-4 w-full">
-            <button onClick={resetKuis} className="py-4 bg-slate-100 text-slate-700 font-bold rounded-2xl active:scale-95 transition-all">Ulangi Kuis</button>
-            <button onClick={() => setActiveTab('beranda')} className="py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all">Beranda</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  const SimulasiView = () => (
-    <div className="h-full animate-in slide-in-from-bottom-4">
-      {simStep === 0 ? (
-        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-              Skenario Kasus #01
-            </div>
-          </div>
-          <h3 className="text-lg font-black text-slate-800 mb-8 leading-tight">
-            Kamu melihat temanmu sedang dirundung (bully) di grup pesan sekolah. Apa tindakan bijakmu?
-          </h3>
-          <div className="space-y-4">
-            {[
-              { t: 'Ikut mengomentari agar terlihat asik di grup', c: false, sub: 'Bisa terkena jerat hukum UU ITE.' },
-              { t: 'Segera ingatkan teman & bela korban', c: true, sub: 'Langkah tepat untuk keamanan bersama.' },
-              { t: 'Hanya menonton saja agar tidak terlibat', c: false, sub: 'Sikap apatis tidak membantu menghentikan masalah.' },
-            ].map((opt, i) => (
-              <button 
-                key={i} 
-                disabled={simFeedback} 
-                onClick={() => handleSimChoice(opt.c)} 
-                className={`w-full p-5 rounded-[1.5rem] border-2 text-left transition-all relative group
-                  ${simFeedback === 'correct' && opt.c ? 'border-emerald-500 bg-emerald-50' : 
-                    simFeedback === 'wrong' && !opt.c ? 'border-rose-500 bg-rose-50' : 'bg-slate-50 border-transparent'}
-                `}
-              >
-                <p className={`text-xs font-black uppercase mb-1 ${simFeedback === 'correct' && opt.c ? 'text-emerald-700' : simFeedback === 'wrong' && !opt.c ? 'text-rose-700' : 'text-slate-700'}`}>
-                  {opt.t}
-                </p>
-                <p className="text-[10px] font-medium text-slate-400">{opt.sub}</p>
-                {simFeedback === 'correct' && opt.c && <CheckCircle className="absolute top-4 right-4 text-emerald-500" size={20} />}
-                {simFeedback === 'wrong' && !opt.c && <XCircle className="absolute top-4 right-4 text-rose-500" size={20} />}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-10 flex flex-col items-center">
-          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-6 border-4 border-white shadow-xl">
-            <CheckCircle size={48} />
-          </div>
-          <h3 className="text-2xl font-black text-slate-900 uppercase">Sangat Bagus!</h3>
-          <p className="text-slate-400 text-sm mt-3 mb-10 px-10 font-medium leading-relaxed">
-            Tindakanmu membantu menciptakan lingkungan digital yang sehat dan aman bagi semua orang.
-          </p>
-          <button 
-            onClick={() => setSimStep(0)} 
-            className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-100 active:scale-95 transition-all"
-          >
-            Lanjut ke Kasus Lain
-          </button>
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-0 sm:p-4">
-      <div className="w-full max-w-[440px] h-screen sm:h-[844px] bg-white sm:rounded-[3.5rem] shadow-2xl overflow-hidden flex flex-col relative border-[8px] border-slate-900">
-        
-        {/* Notch/Sensor Mockup (Phone Look) */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-900 rounded-b-2xl z-[60] hidden sm:block"></div>
-
-        {/* Dynamic Header */}
-        <header className="bg-white/80 backdrop-blur-xl px-6 pt-10 pb-5 flex items-center justify-between border-b border-slate-50 sticky top-0 z-50">
-          <div className="flex items-center gap-4">
-            {(activeTab !== 'beranda' || selectedMateri) && (
-              <button 
-                onClick={() => {
-                  if (selectedMateri) setSelectedMateri(null);
-                  else if (activeTab === 'kuis' && kuisStep > 0) setKuisStep(0);
-                  else if (activeTab === 'simulasi' && simStep > 0) setSimStep(0);
-                  else setActiveTab('beranda');
-                }} 
-                className="p-2.5 bg-slate-50 rounded-2xl text-slate-800 hover:bg-slate-100 transition-colors"
-              >
-                <ArrowLeft size={18} />
-              </button>
-            )}
-            {!selectedMateri && activeTab === 'beranda' && (
-              <div className="w-10 h-10 bg-indigo-50 rounded-2xl p-1.5 shadow-sm">
-                <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
-              </div>
-            )}
-            <div>
-              <h1 className="text-xs font-black text-slate-900 uppercase tracking-tighter">
-                {selectedMateri ? 'Baca Materi' : activeTab === 'beranda' ? 'Law Edu Kit' : activeTab}
-              </h1>
-              {activeTab === 'beranda' && !selectedMateri && (
-                <p className="text-[9px] text-blue-600 font-black uppercase tracking-[0.2em] leading-none mt-0.5">Smart Digital Citizen</p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2.5 text-slate-400 bg-slate-50 rounded-2xl relative">
-              <Bell size={18} />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-            </button>
-          </div>
-        </header>
-
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto px-6 py-6 pb-28 scroll-smooth custom-scrollbar">
-          {selectedMateri ? <MateriDetailView /> : (
-            <>
-              {activeTab === 'beranda' && <HomeView />}
-              {activeTab === 'materi' && <MateriListView />}
-              {activeTab === 'toolkit' && <ToolkitView />}
-              {activeTab === 'kuis' && <KuisView />}
-              {activeTab === 'simulasi' && <SimulasiView />}
-            </>
-          )}
-        </main>
-
-        {/* Modern Tab Bar */}
-        <nav className="absolute bottom-6 left-6 right-6 h-18 bg-slate-900 rounded-[2rem] shadow-2xl flex items-center justify-around px-4 z-50">
-          {[
-            { id: 'beranda', icon: <Home />, label: 'Beranda' },
-            { id: 'materi', icon: <BookOpen />, label: 'Materi' },
-            { id: 'simulasi', icon: <Zap />, label: 'Kasus' },
-            { id: 'kuis', icon: <Trophy />, label: 'Kuis' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSelectedMateri(null);
-                if (tab.id === 'kuis') resetKuis();
-              }}
-              className={`flex flex-col items-center justify-center gap-1 transition-all flex-1 h-full rounded-2xl ${
-                activeTab === tab.id ? 'text-white' : 'text-slate-500'
-              }`}
-            >
-              <div className={`p-2 rounded-xl transition-all ${activeTab === tab.id ? 'bg-indigo-600 scale-110 shadow-lg shadow-indigo-900/40' : ''}`}>
-                {React.cloneElement(tab.icon, { size: 20 })}
-              </div>
-              <span className="text-[8px] font-black uppercase tracking-widest">{tab.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        {/* Global Progress Line at Bottom */}
-        <div className="absolute bottom-0 left-0 w-full h-1.5 bg-slate-100 z-[60]">
-          <div 
-            className="h-full bg-indigo-600 transition-all duration-500" 
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-
-      </div>
-
-      <style dangerouslySetInnerHTML={{ __html: `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Law Edu Kit - Smart Digital Citizenship</title>
+    <!-- Dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         body {
-          font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 0;
         }
 
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 0px;
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        .animate-zoom-in { animation: zoomIn 0.3s ease-out; }
+        .animate-slide-up { animation: slideInUp 0.4s ease-out; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
-        @keyframes pulse-soft {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.02); }
+        .phone-container {
+            height: 100vh;
+            max-width: 450px;
+            margin: 0 auto;
+            background: white;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
         }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-        .animate-pulse-soft {
-          animation: pulse-soft 2s infinite ease-in-out;
-        }
-      `}} />
-    </div>
-  );
-};
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-export default App;
+        // Custom Icon Component
+        const Icon = ({ name, size = 20, className = "", strokeWidth = 2 }) => {
+            useEffect(() => {
+                // Trigger lucide to replace the data-lucide icons
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name, size, className]);
+
+            return <i data-lucide={name} className={className} style={{ width: size, height: size, display: 'inline-block' }}></i>;
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('beranda');
+            const [kuisStep, setKuisStep] = useState(0); 
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [score, setScore] = useState(0);
+            const [showFeedback, setShowFeedback] = useState(false);
+            const [simStep, setSimStep] = useState(0);
+            const [simFeedback, setSimFeedback] = useState(null);
+
+            const logoUrl = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgBENwUGD91BGHhUBoMcXoE5lf0ZrT2rdSJVWEjkldYTAzOzC7MChAwupawsX8Slc4Kk33LjTTYd4WLZQcYQ28WAxYOllfZp1pYo-q_lX9YlDM9XQrfUGd6zQd65NfDSabb0PMprbxpyou5FVu65d0ocx_w5csdq3quXziggZ7wQGBVycQ2g5Tme_g82PIl/w200-h200/Desain%20tanpa%20judul%20(6).png";
+
+            const kuisData = [
+                {
+                    question: "Apa prinsip utama dalam etika digital yang dikenal dengan istilah 'THINK' sebelum mengunggah sesuatu?",
+                    options: [
+                        { id: 'A', text: 'Total, Honest, Icon, New, Kind' },
+                        { id: 'B', text: 'True, Helpful, Inspiring, Necessary, Kind', correct: true },
+                        { id: 'C', text: 'Tough, High, Intelligent, Nice, Knowledge' }
+                    ]
+                },
+                {
+                    question: "Berikut yang termasuk pelanggaran hukum di media sosial adalah...",
+                    options: [
+                        { id: 'A', text: 'Membagikan konten positif' },
+                        { id: 'B', text: 'Menyebarkan hoaks yang merugikan orang lain', correct: true },
+                        { id: 'C', text: 'Memberi komentar yang membangun' }
+                    ]
+                },
+                {
+                    question: "Kamu menemukan foto teman yang sangat lucu tapi memalukan. Apa yang seharusnya kamu lakukan?",
+                    options: [
+                        { id: 'A', text: 'Langsung unggah, kan hanya bercanda' },
+                        { id: 'B', text: 'Izin kepada teman tersebut sebelum mengunggahnya', correct: true },
+                        { id: 'C', text: 'Edit mukanya agar tidak terlalu dikenali baru unggah' }
+                    ]
+                }
+            ];
+
+            const resetKuis = () => {
+                setKuisStep(0);
+                setCurrentQuestionIndex(0);
+                setSelectedOption(null);
+                setScore(0);
+                setShowFeedback(false);
+            };
+
+            const handleKuisNext = () => {
+                if (selectedOption === null) return;
+                const currentQuestion = kuisData[currentQuestionIndex];
+                const selectedObj = currentQuestion.options[selectedOption];
+                
+                if (selectedObj?.correct) setScore(prev => prev + 1);
+                setShowFeedback(true);
+                
+                setTimeout(() => {
+                    setShowFeedback(false);
+                    setSelectedOption(null);
+                    if (currentQuestionIndex < kuisData.length - 1) {
+                        setCurrentQuestionIndex(prev => prev + 1);
+                    } else {
+                        setKuisStep(2);
+                    }
+                }, 1200);
+            };
+
+            const handleSimChoice = (isCorrect) => {
+                setSimFeedback(isCorrect ? 'correct' : 'wrong');
+                setTimeout(() => {
+                    if (isCorrect) setSimStep(prev => prev + 1);
+                    setSimFeedback(null);
+                }, 2000);
+            };
+
+            // Views Components
+            const BerandaView = () => (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white shadow-xl">
+                        <div className="relative z-10">
+                            <span className="inline-block px-2 py-0.5 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3">Terbaru</span>
+                            <h2 className="text-2xl font-extrabold leading-tight mb-2">Bijak Berinternet,<br/>Selamat Dari Jerat!</h2>
+                            <p className="text-blue-100 text-xs font-medium max-w-[85%] leading-relaxed">Pahami aturan main digital agar tetap aman dan nyaman.</p>
+                            <button onClick={() => setActiveTab('materi')} className="mt-6 bg-white text-blue-700 px-5 py-2.5 rounded-full font-bold text-xs shadow-lg flex items-center gap-2 active:scale-95 transition-all">
+                                Mulai Belajar <Icon name="chevron-right" size={14} />
+                            </button>
+                        </div>
+                        <Icon name="scale" size={100} className="absolute -bottom-4 -right-4 opacity-10 rotate-12" />
+                    </div>
+
+                    <section>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-widest">Menu Utama</h3>
+                        </div>
+                        <div className="grid grid-cols-4 gap-3">
+                            {[
+                                { id: 'materi', label: 'Materi', icon: 'book-open', color: 'bg-blue-500' },
+                                { id: 'simulasi', label: 'Simulasi', icon: 'zap', color: 'bg-emerald-500' },
+                                { id: 'toolkit', label: 'Tools', icon: 'wrench', color: 'bg-violet-500' },
+                                { id: 'kuis', label: 'Kuis', icon: 'trophy', color: 'bg-amber-500' },
+                            ].map((item) => (
+                                <button key={item.id} onClick={() => setActiveTab(item.id)} className="flex flex-col items-center gap-2">
+                                    <div className={`${item.color} w-full aspect-square rounded-2xl text-white shadow-md flex items-center justify-center active:scale-90 transition-transform`}>
+                                        <Icon name={item.icon} size={22} />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-600">{item.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+
+                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+                        <div className="flex justify-between items-center mb-3">
+                            <div className="flex items-center gap-2">
+                                <Icon name="award" size={16} className="text-blue-600" />
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">Progress Belajar</p>
+                            </div>
+                            <span className="text-xs font-extrabold text-blue-600">60%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div className="bg-blue-500 h-full w-[60%] rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const MateriView = () => (
+                <div className="space-y-4 animate-slide-up">
+                    <h2 className="font-extrabold text-lg uppercase">Materi Belajar</h2>
+                    {[
+                        { title: 'Privasi & Data Pribadi', sub: 'Amankan jejak digitalmu.', icon: 'lock', color: 'text-blue-500', bg: 'bg-blue-50' },
+                        { title: 'Cyberbullying', sub: 'Batasan bercanda di medsos.', icon: 'message-square', color: 'text-rose-500', bg: 'bg-rose-50' },
+                        { title: 'Jerat UU ITE', sub: 'Pasal penting hukum siber.', icon: 'alert-circle', color: 'text-indigo-500', bg: 'bg-indigo-50' },
+                        { title: 'Hak Cipta Konten', sub: 'Hargai karya orang lain.', icon: 'heart', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                    ].map((m, i) => (
+                        <div key={i} className="bg-white p-4 rounded-3xl flex items-center gap-4 border border-slate-100 shadow-sm active:scale-95 transition-all cursor-pointer">
+                            <div className={`${m.bg} p-3 rounded-2xl`}><Icon name={m.icon} size={24} className={m.color} /></div>
+                            <div className="flex-1">
+                                <p className="font-extrabold text-slate-900 text-sm">{m.title}</p>
+                                <p className="text-[10px] text-slate-400 font-medium">{m.sub}</p>
+                            </div>
+                            <Icon name="chevron-right" size={16} className="text-slate-300" />
+                        </div>
+                    ))}
+                </div>
+            );
+
+            const ToolkitView = () => (
+                <div className="space-y-4 animate-slide-up">
+                    <h2 className="font-extrabold text-lg uppercase">Digital Toolkit</h2>
+                    {[
+                        { t: 'Cek Hoaks', d: 'Deteksi kebenaran berita.', i: 'search', bg: 'bg-sky-50', c: 'text-sky-500' },
+                        { t: 'Pass Security', d: 'Kekuatan kata sandimu.', i: 'shield-check', bg: 'bg-emerald-50', c: 'text-emerald-500' },
+                        { t: 'Lapor Cyber', d: 'Panduan melapor pelecehan.', i: 'file-text', bg: 'bg-indigo-50', c: 'text-indigo-500' },
+                    ].map((item, idx) => (
+                        <div key={idx} className="bg-white p-5 rounded-3xl border border-slate-100 flex items-center gap-4 shadow-sm">
+                            <div className={`${item.bg} p-4 rounded-2xl`}><Icon name={item.i} size={24} className={item.c} /></div>
+                            <div className="flex-1">
+                                <p className="text-sm font-extrabold uppercase">{item.t}</p>
+                                <p className="text-[10px] text-slate-400">{item.d}</p>
+                            </div>
+                            <Icon name="external-link" size={16} className="text-slate-200" />
+                        </div>
+                    ))}
+                </div>
+            );
+
+            return (
+                <div className="phone-container flex flex-col overflow-hidden">
+                    {/* Header */}
+                    <header className="bg-white px-5 py-4 flex items-center justify-between border-b border-slate-50 sticky top-0 z-50">
+                        <div className="flex items-center gap-3">
+                            {activeTab !== 'beranda' ? (
+                                <button onClick={() => {
+                                    if (activeTab === 'kuis' && kuisStep > 0) setKuisStep(0);
+                                    else if (activeTab === 'simulasi' && simStep > 0) setSimStep(0);
+                                    else setActiveTab('beranda');
+                                }} className="p-2 bg-slate-50 rounded-full text-blue-600">
+                                    <Icon name="arrow-left" size={18} />
+                                </button>
+                            ) : (
+                                <div className="w-9 h-9 bg-blue-50 rounded-lg p-1">
+                                    <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                                </div>
+                            )}
+                            <div>
+                                <h1 className="text-xs font-black text-slate-900 uppercase tracking-tighter">
+                                    {activeTab === 'beranda' ? 'Law Edu Kit' : activeTab}
+                                </h1>
+                                {activeTab === 'beranda' && <p className="text-[8px] text-blue-500 font-black uppercase tracking-widest">Smart Citizen</p>}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button className="p-2 text-slate-400"><Icon name="bell" size={18} /></button>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="flex-1 overflow-y-auto px-5 py-6 pb-28">
+                        {activeTab === 'beranda' && <BerandaView />}
+                        {activeTab === 'materi' && <MateriView />}
+                        {activeTab === 'toolkit' && <ToolkitView />}
+                        
+                        {activeTab === 'kuis' && (
+                            <div className="h-full">
+                                {kuisStep === 0 && (
+                                    <div className="flex flex-col items-center justify-center text-center space-y-6 py-6 animate-zoom-in">
+                                        <div className="w-32 h-32 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 border-4 border-white shadow-lg">
+                                            <Icon name="trophy" size={60} />
+                                        </div>
+                                        <h2 className="text-xl font-black text-slate-900 uppercase">Kuis Hukum Digital</h2>
+                                        <p className="text-slate-500 text-xs px-8 font-medium italic">Uji pengetahuanmu tentang aturan di dunia maya.</p>
+                                        <button onClick={() => setKuisStep(1)} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg">Mulai Sekarang</button>
+                                    </div>
+                                )}
+                                {kuisStep === 1 && (
+                                    <div className="space-y-6 animate-fade-in">
+                                        <div className="flex justify-between text-[10px] font-black text-blue-900 uppercase">
+                                            <span>Soal {currentQuestionIndex + 1} / {kuisData.length}</span>
+                                            <span>Skor: {score * 10}</span>
+                                        </div>
+                                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                                            <h3 className="font-bold text-slate-800 text-md">{kuisData[currentQuestionIndex].question}</h3>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {kuisData[currentQuestionIndex].options.map((opt, i) => (
+                                                <button 
+                                                    key={i} 
+                                                    disabled={showFeedback}
+                                                    onClick={() => setSelectedOption(i)}
+                                                    className={`w-full p-4 rounded-2xl border text-left text-xs font-bold transition-all flex items-center gap-3
+                                                        ${selectedOption === i ? 'border-blue-600 bg-blue-50 text-blue-700' : 'bg-white border-slate-100 text-slate-600'}
+                                                        ${showFeedback && opt.correct ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : ''}
+                                                    `}
+                                                >
+                                                    <span className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">{opt.id}</span>
+                                                    {opt.text}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button 
+                                            disabled={selectedOption === null || showFeedback}
+                                            onClick={handleKuisNext}
+                                            className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg disabled:bg-slate-200"
+                                        >
+                                            {currentQuestionIndex === kuisData.length - 1 ? 'Lihat Hasil' : 'Selanjutnya'}
+                                        </button>
+                                    </div>
+                                )}
+                                {kuisStep === 2 && (
+                                    <div className="flex flex-col items-center text-center py-6 animate-zoom-in">
+                                        <div className="w-32 h-32 bg-blue-600 rounded-full flex flex-col items-center justify-center text-white border-8 border-blue-50 shadow-xl mb-6">
+                                            <span className="text-4xl font-black">{Math.round((score/kuisData.length)*100)}</span>
+                                        </div>
+                                        <h2 className="text-xl font-black uppercase mb-2">Hasil Selesai!</h2>
+                                        <p className="text-slate-500 text-xs mb-8">Teruslah belajar untuk menjadi warga digital yang lebih baik.</p>
+                                        <button onClick={() => setActiveTab('beranda')} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg">Kembali ke Beranda</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'simulasi' && (
+                            <div className="h-full animate-slide-up">
+                                {simStep === 0 ? (
+                                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                                        <span className="text-[10px] font-black text-emerald-600 uppercase mb-4 block tracking-widest">Skenario Kasus #1</span>
+                                        <p className="text-sm font-bold text-slate-800 mb-6">Kamu melihat temanmu sedang dirundung (bully) di grup pesan sekolah. Apa tindakanmu?</p>
+                                        <div className="space-y-3">
+                                            {[
+                                                { t: 'Ikut mengomentari biar seru', c: false },
+                                                { t: 'Segera ingatkan teman & bela korban', c: true },
+                                                { t: 'Diam saja agar tidak terlibat', c: false },
+                                            ].map((opt, i) => (
+                                                <button key={i} disabled={simFeedback} onClick={() => handleSimChoice(opt.c)} 
+                                                    className={`w-full p-4 rounded-2xl border-2 text-left text-xs font-bold transition-all 
+                                                        ${simFeedback === 'correct' && opt.c ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 
+                                                          simFeedback === 'wrong' && !opt.c ? 'border-rose-500 bg-rose-50 text-rose-700' : 'bg-slate-50 border-transparent'}`}>
+                                                    {opt.t}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-10">
+                                        <Icon name="check-circle" size={60} className="text-emerald-500 mx-auto mb-4" />
+                                        <h3 className="text-lg font-black uppercase">Sangat Bagus!</h3>
+                                        <p className="text-slate-500 text-xs mt-2 mb-8 px-6">Tindakanmu membantu menciptakan lingkungan digital yang sehat.</p>
+                                        <button onClick={() => setSimStep(0)} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold">Main Lagi</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Bottom Navigation */}
+                    <nav className="glass-nav border-t border-slate-50 flex justify-around py-3 absolute bottom-0 w-full z-50">
+                        {[
+                            { id: 'beranda', icon: 'home', label: 'Home' },
+                            { id: 'materi', icon: 'book-open', label: 'Materi' },
+                            { id: 'simulasi', icon: 'zap', label: 'Kasus' },
+                            { id: 'kuis', icon: 'trophy', label: 'Kuis' },
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => {
+                                    setActiveTab(tab.id);
+                                    if (tab.id === 'kuis') resetKuis();
+                                }}
+                                className={`flex flex-col items-center gap-1 transition-all flex-1 ${
+                                    activeTab === tab.id ? 'text-blue-600' : 'text-slate-400'
+                                }`}
+                            >
+                                <Icon name={tab.icon} size={20} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
+                                <span className="text-[9px] font-bold uppercase tracking-tighter">{tab.label}</span>
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
